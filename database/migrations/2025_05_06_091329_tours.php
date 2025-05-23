@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pengaduans', function (Blueprint $table) {
-            $table->id();
+        Schema::create('tours', function (Blueprint $table) {
+            $table->id('id_tour');
+            $table->string('address_tour');
+            $table->string('tour_name');
             $table->timestamps();
         });
     }
@@ -22,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pengaduans');
+        Schema::dropIfExists('tours');
     }
 };

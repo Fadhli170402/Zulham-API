@@ -7,6 +7,8 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Notifications\ResetPasswordNotification;
+use PDO;
 
 class User extends Authenticatable
 {
@@ -19,7 +21,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $table = 'users';
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'id_users';
 
     protected $fillable = [
         'username',
@@ -56,5 +58,20 @@ class User extends Authenticatable
     public function isUser()
     {
         return $this->role === 'user';
+    }
+
+    public function rating()
+    {
+        return $this->hasMany(ratings::class, 'id_users');
+    }
+
+    public function complaints()
+    {
+        return $this->hasMany(complaints::class, 'id_users');
+    }
+
+    public function sendPasswordResetNotofication($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

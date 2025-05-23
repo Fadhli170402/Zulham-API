@@ -52,6 +52,7 @@ class AuthController extends Controller
             [
                 'username' => 'required|string',
                 'password' => 'required|string',
+                // id_tour' => 'required|exists:tours,id_tour',
             ],
             [
                 'username.required' => 'Username Wajib Diisi',
@@ -67,7 +68,6 @@ class AuthController extends Controller
                 'message' => 'Email atau Password Salah',
             ], 401);
         }
-        //$user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -77,18 +77,14 @@ class AuthController extends Controller
             'data' => [
                 'user' => $user,
                 'token' => $token,
+                // 'id_tour' => $credentials['id_tour'],
                 'role' => $user->role,
             ],
         ], 200);
     }
     public function logout(Request $request)
     {
-        //$users = User::where('username', $request->username);
-        //$request->user()->currentAccessToken()->delete();
-        // return response()->json([
-        //   'status' => 'success',
-        ///   'message' => 'Logout Berhasil',
-        // ], 200);
+
         if (!$request->user()) {
             return response()->json([
                 'status' => 'error',
@@ -97,8 +93,6 @@ class AuthController extends Controller
         }
 
         $request->user()->currentAccessToken()->delete();
-
-        //Log::info('User logged out: ' . $request->user()->username);
 
         return response()->json([
             'status' => 'success',
