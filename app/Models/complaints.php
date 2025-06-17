@@ -14,9 +14,10 @@ class complaints extends Model
         'complaint_date',
         'id_users',
         'id_location',
+        'id_tour',
     ];
 
-    public function users()
+    public function user()
     {
         return $this->belongsTo(User::class, 'id_users');
     }
@@ -29,5 +30,9 @@ class complaints extends Model
     public function media()
     {
         return $this->hasMany(medias::class, 'id_complaint');
+    }
+    public function tour()
+    {
+        return $this->belongsTo(tours::class, 'id_tour', 'id_tour');
     }
 }

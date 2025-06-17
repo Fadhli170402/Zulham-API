@@ -2,21 +2,74 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Str;
 use App\Models\ratings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Auth\Events\Validated;
 
 class RatingsController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    // Ambil ID User dari Token
+    private function getUserIdFromToken(Request $request)
     {
-        $ratings = ratings::with(['tour', 'users'])->get();
+        $user = $request->user();
+        if (!$user || !$user->currentAccessToken()) {
+            return null;
+        }
+
+        $abilities = $user->currentAccessToken()->abilities;
+
+        foreach ($abilities as $ability) {
+            if (Str::startsWith($ability, 'id_users:')) {
+                return explode(':', $ability)[1]; // Ambil ID user
+            }
+        }
+        return null;
+    }
+    // Ambil ID Tour dari Token
+    private function getTourIdFromToken(Request $request)
+    {
+        $user = $request->user();
+        if (!$user || !$user->currentAccessToken()) {
+            return null;
+        }
+
+        $abilities = $user->currentAccessToken()->abilities;
+
+        foreach ($abilities as $ability) {
+            if (Str::startsWith($ability, 'id_tour:')) {
+                return explode(':', $ability)[1]; // Ambil ID tour
+            }
+        }
+
+        return null;
+    }
+    public function index(Request $request)
+    {
+        $id_user = $this->getUserIdFromToken($request);
+        $id_tour = $this->getTourIdFromToken($request);
+
+        if (!$id_user || !$id_tour) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'ID User atau ID Tour tidak ditemukan dalam token'
+            ], 403);
+        }
+
+        // Query rating berdasarkan user dan tour
+        $ratings = ratings::with('users')
+            ->where('id_users', $id_user)
+            ->where('id_tour', $id_tour)
+            ->get();
+
         return response()->json([
             'status' => 'success',
-            'message' => 'Data Berhasil Ditemukan',
-            'data' => $ratings,
+            'message' => 'Data rating berhasil ditemukan',
+            'data' => $ratings
         ], 200);
     }
 
@@ -25,16 +78,27 @@ class RatingsController extends Controller
      */
     public function store(Request $request)
     {
+
         $request->validate([
-            'id_tour' => 'required|exists:tours,id_tour',
             'value' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string|max:255',
         ]);
-
         $user = $request->user();
+
+        // Get id_tour from request login
+        $ability = collect($user->currentAccessToken()->abilities)
+            ->first(fn($a) => str_starts_with($a, 'id_tour:'));
+        if (!$ability) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'ID Tour tidak ditemukan dalam token'
+            ], 403);
+        }
+        // $id_tour = explode('id_tour:', '', $ability);
+        $id_tour = explode(':', $ability)[1];
         $rating = ratings::updateOrCreate(
             [
-                'id_tour' => $request->id_tour,
+                'id_tour' => $id_tour,
                 'id_users' => $user->id_users,
             ],
             [
@@ -78,9 +142,10 @@ class RatingsController extends Controller
         //
     }
 
-    public function getRatingByTour($id)
+    public function getRating(Request $request)
     {
-        $ratings = ratings::where('id_tour', $id)->get();
+
+        $ratings = ratings::with(['tour', 'users'])->get();
         return response()->json([
             'status' => 'success',
             'message' => 'Data Berhasil Ditemukan',

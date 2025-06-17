@@ -54,16 +54,45 @@ class TourController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, tours $tours)
+    public function update(Request $request, tours $tours, $id)
     {
-        //
+        $request->validate([
+            'address_tour' => 'sometimes|string|max:255',
+            'tour_name' => 'sometimes|string|max:255',
+        ]);
+        try {
+            $tours = tours::findOrFail($id);
+            $tours->update($request->only(['address_tour', 'tour_name']));
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data Berhasil Diupdate',
+                'data' => $tours,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data Gagal Diupdate: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(tours $tours)
+    public function destroy($id)
     {
-        //
+        try {
+            $tours = tours::findOrFail($id);
+            $tours->delete();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data Berhasil Dihapus',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data Gagal Dihapus: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

@@ -27,18 +27,20 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'
 Route::middleware('auth:sanctum', 'role:admin')->group(function () {
     Route::apiResource('/admin/dasboard', adminController::class);
     Route::apiResource('/locations', LocationsController::class);
-    // Route::apiResource('/locations/{id}', LocationsController::class);
     Route::apiResource('/Tour', TourController::class);
+    Route::apiResource('/media', MediaController::class);
+    Route::get('/showRatings', [RatingsController::class, 'getRating']);
+    Route::get('/showPengaduan', [adminController::class, 'getPengaduan']);
+    Route::delete('/Media', [adminController::class, 'destroyMedia']);
+    Route::get('/Media', [adminController::class, 'showMedia']);
     Route::post('admin/logout', [AuthController::class, 'logout']);
 });
 
 Route::middleware('auth:sanctum', 'role:user')->group(function () {
     Route::apiResource('/users', userController::class);
     Route::apiResource('/ratings', RatingsController::class);
-    // Route::apiResource('/ratings/{id}', RatingsController::class);
     Route::apiResource('/complaints', ComplaintsController::class);
     Route::apiResource('/media', MediaController::class);
-    // Route::get('/users/{id}', [userController::class, 'show']);
-
+    Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });

@@ -67,7 +67,7 @@ class User extends Authenticatable
 
     public function complaints()
     {
-        return $this->hasMany(complaints::class, 'id_users');
+        return $this->hasMany(complaints::class, 'id_users', 'id_users');
     }
 
     public function sendPasswordResetNotofication($token)

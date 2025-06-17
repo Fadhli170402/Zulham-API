@@ -17,4 +17,9 @@ class tours extends Model
     {
         return $this->hasMany(ratings::class, 'id_tour');
     }
+
+    public function complaints()
+    {
+        return $this->hasMany(complaints::class, 'id_complaint');
+    }
 }

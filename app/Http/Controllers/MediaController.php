@@ -40,32 +40,32 @@ class MediaController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'id_complaint' => 'required|exists:complaints,id_complaint',
-            'path' => 'required|file|mimes:jpg,jpeg,png,mp4,mov|max:20480',
-        ]);
+        // $request->validate([
+        //     'id_complaint' => 'required|exists:complaints,id_complaint',
+        //     'path' => 'required|file|mimes:jpg,jpeg,png,mp4,mov|max:20480',
+        // ]);
 
-        $file = $request->file('path');
+        // $file = $request->file('path');
 
-        // Deteksi Otomatis media type
-        $mime = $file->getMimeType();
-        $mediaType = str_starts_with($mime, 'video') ? 'video' : 'image';
+        // // Deteksi Otomatis media type
+        // $mime = $file->getMimeType();
+        // $mediaType = str_starts_with($mime, 'video') ? 'video' : 'image';
 
-        // Simpan file ke storage
-        $filename = time() . '_' . $file->getClientOriginalName();
-        $pathfile = $file->storeAs('uploads', $filename, 'public');
-        $file = medias::create([
-            'id_complaint' => $request->id_complaint,
-            'path' => $pathfile,
-            'media_type' => $mediaType,
-        ]);
+        // // Simpan file ke storage
+        // $filename = time() . '_' . $file->getClientOriginalName();
+        // $pathfile = $file->storeAs('uploads', $filename, 'public');
+        // $file = medias::create([
+        //     'id_complaint' => $request->id_complaint,
+        //     'path' => $pathfile,
+        //     'media_type' => $mediaType,
+        // ]);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Media uploaded successfully',
-            'data' => $file,
-            'path' => $pathfile,
-        ], 201);
+        // return response()->json([
+        //     'status' => 'success',
+        //     'message' => 'Media uploaded successfully',
+        //     'data' => $file,
+        //     'path' => $pathfile,
+        // ], 201);
     }
 
 

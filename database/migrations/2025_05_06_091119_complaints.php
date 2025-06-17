@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('id_location')->constrained('locations', 'id_location')->onDelete('cascade')->onUpdate('cascade');
             $table->string('complaint');
             $table->dateTime('complaint_date')->useCurrent();
+            $table->foreignId('id_tour')->constrained('tours', 'id_tour')->onDelete('cascade')->onUpdate('cascade');
             // $table->string('Photo_Video')->nullable();
             $table->timestamps();
         });
@@ -27,6 +28,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('complaints');
+        // Schema::dropIfExists('complaints');
+        Schema::table('complaints', function (Blueprint $table) {
+            $table->dropForeign(['id_tour']);
+            $table->dropColumn('id_tour');
+        });
     }
 };
