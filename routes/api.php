@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum', 'role:admin')->group(function () {
     Route::apiResource('/media', MediaController::class);
     Route::get('/showRatings', [RatingsController::class, 'getRating']);
     Route::get('/showPengaduan', [adminController::class, 'getPengaduan']);
+    Route::get('/showPengaduan/{id}', [adminController::class, 'getPengaduanById']);
     Route::delete('/Media', [adminController::class, 'destroyMedia']);
     Route::get('/Media', [adminController::class, 'showMedia']);
     Route::post('admin/logout', [AuthController::class, 'logout']);

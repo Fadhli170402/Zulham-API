@@ -54,29 +54,40 @@ class adminController extends Controller
 
     public function getPengaduan()
     {
-        $pengaduan = User::with(['complaints.media'])->get();
+        $pengaduan = User::with(['complaints.media'])->orderBy('created_at', 'desc')->get();
         return response()->json([
             'status' => 'success',
             'message' => 'Data Pengaduan Berhasil Ditemukan',
             'data' => $pengaduan,
         ], 200);
     }
+
+    public function getPengaduanbyId($id)
+    {
+        $pengaduan = complaints::find($id)->load(['media']);
+        if (!$pengaduan) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data Pengaduan Tidak Ditemukan',
+            ], 404);
+        }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data Pengaduan Berhasil Ditemukan',
+            'data' => ([
+                'id_complaint' => $pengaduan->id_complaint,
+                'complaint' => $pengaduan->complaint,
+                'complaint_date' => $pengaduan->complaint_date,
+                'user' => $pengaduan->user->username,
+                'location' => $pengaduan->location->complete_address,
+                'tour' => $pengaduan->tour ? $pengaduan->tour->tour_name : null,
+                'media' => $pengaduan->media,
+            ]),
+        ], 200);
+    }
     public function destroyMedia(Request $request)
     {
-        // $user = Auth::user();
-        // if ($user->role !== 'admin') {
-        //     return response()->json(['message' => 'Unauthorized'], 403);
-        // }
-
-        // $media = medias::all();
-
-        // if (Storage::disk('public')->exists($media->path)) {
-        //     Storage::disk('public')->delete($media->path);
-        // }
-        // $media->delete();
-
-        // return response()->json(['message' => 'Media deleted successfully'], 200);
-        // $user = Auth::user();
+        // Check if the authenticated user is an admin
         if (Auth::user()->role !== 'admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
         }

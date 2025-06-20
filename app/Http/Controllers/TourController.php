@@ -43,12 +43,19 @@ class TourController extends Controller
      */
     public function show($id)
     {
-        $tour = tours::with(['location', 'ratings'])->findOrFail($id);
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Data Berhasil Ditemukan',
-            'data' => $tour,
-        ], 200);
+        try {
+            $tour = tours::findOrFail($id);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data Berhasil Ditemukan',
+                'data' => $tour,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data Tidak Ditemukan: ' . $e->getMessage(),
+            ], 404);
+        }
     }
 
     /**
