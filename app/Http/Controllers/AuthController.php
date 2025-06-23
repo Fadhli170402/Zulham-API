@@ -17,9 +17,9 @@ class AuthController extends Controller
         $users = new User();
 
         $rules = [
-            'username' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username',
             'password' => 'required|string|min:8',
-            'email' => 'required|email|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
             'role' => 'in:admin,user',
         ];
 
@@ -38,7 +38,7 @@ class AuthController extends Controller
         $users->email = $request->email;
         $users->role = $request->role ?? 'user';
 
-        $post = $users->save();
+        $users->save();
 
         //$token = $users->createToken('auth_token')->plainTextToken;
         return response()->json([

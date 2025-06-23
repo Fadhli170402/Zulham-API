@@ -21,8 +21,8 @@ use App\Http\Controllers\ForgotPasswordController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
-Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->middleware('guest')->name('password.email');
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->middleware('guest')->name('password.update');
 
 Route::middleware('auth:sanctum', 'role:admin')->group(function () {
     Route::apiResource('/admin/dasboard', adminController::class);
