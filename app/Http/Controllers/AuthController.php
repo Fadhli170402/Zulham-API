@@ -134,44 +134,4 @@ class AuthController extends Controller
             'message' => 'Logout Berhasil',
         ], 200);
     }
-
-
-    // public function me(Request $request)
-    // {
-    //     $user = $request->user();
-
-    //     $abilities = $user->currentAccessToken()->abilities;
-    //     $id_tours = null;
-
-    //     foreach ($abilities as $ability) {
-    //         if (strpos($ability, 'tours:') === 0) {
-    //             $id_tours = (int) str_replace('tours', '', $ability)[1];
-    //             break;
-    //         }
-    //     }
-    //     if (!$id_tours) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'ID Tour tidak ditemukan dalam token'
-    //         ], 403);
-    //     }
-
-    //     $wisata = tours::find($id_tours);
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'Data User Berhasil Ditemukan',
-    //         'data' => [
-    //             'user' => [
-    //                 'id_users' => $user->id_users,
-    //                 'username' => $user->username,
-    //                 'email' => $user->email,
-    //                 'role' => $user->role,
-    //             ],
-    //             'wisata' => [
-    //                 'id_tour' => $wisata,
-    //             ],
-    //         ],
-    //     ], 200);
-    // }
 }

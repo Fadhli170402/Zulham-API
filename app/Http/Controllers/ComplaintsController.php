@@ -164,7 +164,39 @@ class ComplaintsController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $complaint = complaints::with(['media', 'user', 'location', 'tour'])->findOrFail($id);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data Pengaduan Berhasil Ditemukan',
+            'data' => [
+                'id_complaint' => $complaint->id_complaint,
+                'complaint' => $complaint->complaint,
+                'complaint_date' => $complaint->complaint_date,
+                'user' => [
+                    'id_users' => $complaint->user->id_users,
+                    'username' => $complaint->user->username,
+                    'email' => $complaint->user->email,
+                ],
+                'location' => [
+                    'id_location' => $complaint->location->id_location,
+                    'latitude' => $complaint->location->latitude,
+                    'longitude' => $complaint->location->longitude,
+                    'complete_address' => $complaint->location->complete_address,
+                ],
+                'media' => $complaint->media->map(function ($media) {
+                    return [
+                        'id_media' => $media->id_media,
+                        'path' => Storage::url($media->path),
+                        'media_type' => $media->media_type,
+                    ];
+                }),
+                'tour' => [
+                    'id_tour' => $complaint->tour ? $complaint->tour->id_tour : null,
+                    'tour_name' => $complaint->tour ? $complaint->tour->tour_name : null,
+                    'address_tour' => $complaint->tour ? $complaint->tour->address_tour : null,
+                ],
+            ]
+        ], 200);
     }
 
     /**
@@ -189,15 +221,5 @@ class ComplaintsController extends Controller
 
         $complaint->delete();
         return response()->json(['message' => 'Pengaduan Dan Media Berhasil Dihapus'], 200);
-        // $user = Auth::user();
-        // // $user = auth()->user();
-        // if ($user->role !== 'admin') {
-        //     return response()->json([
-        //         'message' => 'Unauthorized'
-        //     ], 403);
-        // }
-        // $media = medias::findOrFail($id);
-        // Storage::disk('public')->delete($media->path);
-
     }
 }
