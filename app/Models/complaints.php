@@ -24,12 +24,12 @@ class complaints extends Model
 
     public function location()
     {
-        return $this->belongsTo(locations::class, 'id_location');
+        return $this->belongsTo(locations::class, 'id_location', 'id_location');
     }
 
     public function media()
     {
-        return $this->hasMany(medias::class, 'id_complaint');
+        return $this->hasMany(medias::class, 'id_complaint', 'id_complaint');
     }
     public function tour()
     {
