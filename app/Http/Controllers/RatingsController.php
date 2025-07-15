@@ -7,6 +7,7 @@ use App\Models\ratings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Events\Validated;
+use Illuminate\Support\Facades\DB;
 
 class RatingsController extends Controller
 {
@@ -131,15 +132,130 @@ class RatingsController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        Log::info('Update request received:', [
+            'id' => $id,
+            'method' => $request->method(),
+            'all_data' => $request->all(),
+        ]);
+
+        $validate = $request->validate([
+            'value' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:255',
+        ]);
+
+        Log::info('Validation passed:', $validate);
+
+        DB::beginTransaction();
+        try {
+            $rating = ratings::where('id_rating', $id)->first();
+            if (!$rating) {
+                DB::rollback();
+                Log::error('Rating not found for update:', ['id' => $id]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Rating tidak ditemukan',
+                ], 404);
+            }
+            // Simpan data lama untuk perbandingan
+            $oldrating = $rating->value;
+            $oldcomment = $rating->comment;
+
+            // Update data rating baru 
+            $rating->value = $validate['value'];
+            $rating->comment = $validate['comment'];
+
+            // Cek Aakah Data Berhasil Diupdate
+            if ($rating->isDirty()) {
+                Log::info('Rating has changes, saving... ');
+                $savedrating = $rating->save();
+                Log::info('Rating saved successfully:' . ($savedrating ? 'SUCESS' : 'FAILED'));
+                if (!$savedrating) {
+                    throw new \Exception('Failed to save rating');
+                }
+            } else {
+                Log::info('No changes detected, skipping save.');
+            }
+            // Verify if the rating was updated successfully
+            $rating->refresh();
+            Log::info('Rating after update:', [
+                'id' => $rating->id_ratings,
+                'value' => $rating->value,
+                'comment' => $rating->comment,
+            ]);
+            DB::commit();
+            Log::info('Transaction committed successfully');
+
+            if (!$rating) {
+                Log::error('Failed to update rating:', ['id' => $id]);
+                throw new \Exception('Failed to update rating');
+            }
+            Log::info('Final data After Refresh: ', $rating->toArray());
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data Berhasil Diubah',
+                'data' => $rating,
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error during update:', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengupdate rating: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroyRatings(string $id)
     {
-        //
+        Log::info('Delete request received for rating ID:', ['id' => $id]);
+
+        DB::beginTransaction();
+        try {
+            $rating = ratings::where('id_rating', $id)->first();
+
+            if (!$rating) {
+                DB::rollback();
+                Log::error('Rating not found for deletion:', ['id' => $id]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Rating tidak ditemukan',
+                ], 404);
+            }
+            Log::info('Rating found for deletion:', [
+                'id' => $rating->id_rating,
+                'value' => $rating->value,
+                'comment' => $rating->comment,
+            ]);
+            $deleted = $rating->delete();
+
+            if (!$deleted) {
+                Log::error('Failed to delete rating:', ['id' => $id]);
+                throw new \Exception('Failed to delete rating');
+            }
+            Log::info('Rating deleted successfully:', ['id' => $id]);
+            DB::commit();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data Berhasil Dihapus',
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error during deletion:', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menghapus rating: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getRating(Request $request)
