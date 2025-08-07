@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum', 'role:admin')->group(function () {
     Route::get('/showRatings', [RatingsController::class, 'getRating']);
     Route::get('/showPengaduan', [adminController::class, 'getPengaduan']);
     Route::delete('/ratings/{id}', [RatingsController::class, 'destroyRatings']);
+    Route::get('/admin/complaints/tour/{id_tour}', [adminController::class, 'getComplaintsByTour']);
+
     Route::get('/showPengaduan/{id}', [adminController::class, 'getPengaduanById']);
     Route::get('/showPengaduan/user/{id}/tour/{id_tour}', [adminController::class, 'getComplaintById']);
     Route::delete('/Media', [adminController::class, 'destroyMedia']);
