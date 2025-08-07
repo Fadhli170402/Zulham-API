@@ -15,6 +15,36 @@ class RatingsController extends Controller
      * Display a listing of the resource.
      */
     // Ambil ID User dari Token
+
+    public function getByTour($id_tour)
+{
+    try {
+        $ratings = ratings::with(['tour', 'users'])
+            ->where('id_tour', $id_tour)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($ratings->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Rating untuk tour ini tidak ditemukan',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data rating berhasil ditemukan',
+            'data' => $ratings
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Gagal mengambil data rating: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+
+    
     private function getUserIdFromToken(Request $request)
     {
         $user = $request->user();
