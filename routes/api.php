@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum', 'role:admin')->group(function () {
     Route::get('/showPengaduan', [adminController::class, 'getPengaduan']);
     Route::delete('/ratings/{id}', [RatingsController::class, 'destroyRatings']);
     Route::get('/showPengaduan/{id}', [adminController::class, 'getPengaduanById']);
+    Route::get('/showPengaduan/user/{id}/tour/{id_tour}', [adminController::class, 'getComplaintById']);
     Route::delete('/Media', [adminController::class, 'destroyMedia']);
     Route::get('/Media', [adminController::class, 'showMedia']);
     Route::post('admin/logout', [AuthController::class, 'logout']);
@@ -47,5 +48,5 @@ Route::middleware('auth:sanctum', 'role:user')->group(function () {
     Route::apiResource('/complaints', ComplaintsController::class);
     Route::apiResource('/media', MediaController::class);
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/complaints/user/{id}', [ComplaintsController::class, 'getComplaintById']);
+    Route::get('/complaints/user/{id}/tour/{id_tour}', [ComplaintsController::class, 'getComplaintById']);
 });
