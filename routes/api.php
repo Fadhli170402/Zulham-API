@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum', 'role:user')->group(function () {
     Route::apiResource('/users', userController::class);
     Route::apiResource('/ratings', RatingsController::class);
     Route::get('/get-rating', [RatingsController::class, 'getRating']);
+    Route::get('/ratings/tour/{id_tour}', [RatingsController::class, 'getByTour']);
 
     Route::apiResource('/complaints', ComplaintsController::class);
     Route::apiResource('/media', MediaController::class);
