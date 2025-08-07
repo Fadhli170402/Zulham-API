@@ -74,6 +74,16 @@ class RatingsController extends Controller
         ], 200);
     }
 
+    public function indexAll()
+    {
+        $ratings = ratings::with(['tour', 'users'])->orderBy('created_at', 'desc')->get();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data rating berhasil ditemukan',
+            'data' => $ratings
+        ], 200);
+    }
+
     /**
      * Store a newly created resource in storage.
      */

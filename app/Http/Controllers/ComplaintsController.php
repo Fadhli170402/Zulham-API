@@ -418,4 +418,55 @@ class ComplaintsController extends Controller
         $complaint->delete();
         return response()->json(['message' => 'Pengaduan Dan Media Berhasil Dihapus'], 200);
     }
+
+    public function getComplaintById($id_users)
+    {
+        $complaint = complaints::with(['media', 'user', 'location', 'tour'])
+            ->where('id_users', $id_users)
+            ->orderBy('complaint_date', 'desc')
+            ->get();
+
+        if ($complaint->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak ada pengaduan ditemukan untuk pengguna ini'
+            ], 404);
+        }
+        $data = $complaint->map(function ($complaint) {
+            return [
+                'id_complaint' => $complaint->id_complaint,
+                'complaint' => $complaint->complaint,
+                'complaint_date' => $complaint->complaint_date,
+                'user' => [
+                    'id_users' => $complaint->user->id_users,
+                    'username' => $complaint->user->username,
+                    'email' => $complaint->user->email,
+                ],
+                'location' => [
+                    'id_location' => $complaint->location->id_location,
+                    'latitude' => $complaint->location->latitude,
+                    'longitude' => $complaint->location->longitude,
+                    'complete_address' => $complaint->location->complete_address,
+                ],
+                'media' => $complaint->media->map(function ($media) {
+                    return [
+                        'id_media' => $media->id_media,
+                        'path' => Storage::url($media->path),
+                        'media_type' => $media->media_type,
+                    ];
+                }),
+                'tour' => [
+                    'id_tour' => $complaint->tour ? $complaint->tour->id_tour : null,
+                    'tour_name' => $complaint->tour ? $complaint->tour->tour_name : null,
+                    'address_tour' => $complaint->tour ? $complaint->tour->address_tour : null,
+                ],
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data Pengaduan Berhasil Ditemukan',
+            'data' => $data
+        ], 200);
+    }
 }
