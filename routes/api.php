@@ -41,6 +41,8 @@ Route::middleware('auth:sanctum', 'role:admin')->group(function () {
 Route::middleware('auth:sanctum', 'role:user')->group(function () {
     Route::apiResource('/users', userController::class);
     Route::apiResource('/ratings', RatingsController::class);
+    Route::get('/get-rating', [RatingsController::class, 'getRating']);
+
     Route::apiResource('/complaints', ComplaintsController::class);
     Route::apiResource('/media', MediaController::class);
     Route::post('/logout', [AuthController::class, 'logout']);
