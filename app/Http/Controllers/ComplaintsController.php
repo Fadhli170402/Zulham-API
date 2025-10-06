@@ -55,29 +55,31 @@ class ComplaintsController extends Controller
             ->get();
 
         $complaintsData = $complaints->map(function ($complaint) {
+    return [
+        'id_complaint' => $complaint->id_complaint,
+        'complaint' => $complaint->complaint,
+        'complaint_date' => $complaint->complaint_date,
+        'status' => $complaint->status, // <- AMBIL STATUS
+        'user' => [
+            'id_users' => $complaint->user->id_users,
+            'username' => $complaint->user->username,
+            'email' => $complaint->user->email,
+        ],
+        'media' => $complaint->media->map(function ($media) {
             return [
-                'id_complaint' => $complaint->id_complaint,
-                'complaint' => $complaint->complaint,
-                'complaint_date' => $complaint->complaint_date,
-                'user' => [
-                    'id_users' => $complaint->user->id_users,
-                    'username' => $complaint->user->username,
-                    'email' => $complaint->user->email,
-                ],
-                'media' => $complaint->media->map(function ($media) {
-                    return [
-                        'id_media' => $media->id_media,
-                        'path' => Storage::url($media->path),
-                        'media_type' => $media->media_type,
-                    ];
-                }),
-                'tour' => [
-                    'id_tour' => $complaint->tour->id_tour,
-                    'tour_name' => $complaint->tour->tour_name,
-                    'address_tour' => $complaint->tour->address_tour,
-                ],
+                'id_media' => $media->id_media,
+                'path' => Storage::url($media->path),
+                'media_type' => $media->media_type,
             ];
-        });
+        }),
+        'tour' => [
+            'id_tour' => $complaint->tour->id_tour,
+            'tour_name' => $complaint->tour->tour_name,
+            'address_tour' => $complaint->tour->address_tour,
+        ],
+    ];
+});
+
 
         return response()->json([
             'status' => 'success',
@@ -89,75 +91,60 @@ class ComplaintsController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'complaint' => 'required|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'complete_address' => 'required|string|max:255',
-            'media.*' => 'file|mimes:jpg,jpeg,png,mp4'
-        ]);
+   public function store(Request $request)
+{
+    $request->validate([
+        'complaint' => 'required|string',
+        'latitude' => 'required|numeric',
+        'longitude' => 'required|numeric',
+        'complete_address' => 'required|string|max:255',
+        'media.*' => 'file|mimes:jpg,jpeg,png,mp4',
+        // 'status' => 'in:pending,proses,selesai' // opsional
+    ]);
 
-        // Get id_users 
-        $user = $request->user();
+    $user = $request->user();
 
-        // Store location
-        $location = locations::create([
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'complete_address' => $request->complete_address,
-        ]);
+    $location = locations::create([
+        'latitude' => $request->latitude,
+        'longitude' => $request->longitude,
+        'complete_address' => $request->complete_address,
+    ]);
 
-        // Store complaint
-        $complaint = complaints::create([
-            'complaint' => $request->complaint,
-            'complaint_date' => now(),
-            'id_users' => $user->id_users,
-            'id_location' => $location->id_location,
-            'id_tour' => $this->getTourIdFromToken($request),
-        ]);
+    $complaint = complaints::create([
+        'complaint' => $request->complaint,
+        'complaint_date' => now(),
+        'id_users' => $user->id_users,
+        'id_location' => $location->id_location,
+        'id_tour' => $this->getTourIdFromToken($request),
+        // 'status' => $request->input('status', 'pending'), // kalau mau override default
+    ]);
 
-        // Store media
-        if ($request->hasFile('media')) {
-            foreach ($request->file('media') as $file) {
-                //Deteksi otomatis media type
-                $mime = $file->getMimeType();
-                $mediaType = str_starts_with($mime, 'video') ? 'video' : 'image';
-                // Simpan file ke storage
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $pathfile = $file->storeAs('uploads', $filename, 'public');
-                // Simpan ke database   
-                medias::create([
-                    'id_complaint' => $complaint->id_complaint,
-                    'path' => $pathfile,
-                    'media_type' => $mediaType,
-                ]);
-            }
-        }
-        // dd($complaint->load('media'));
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Pengaduan Berhasil Disimpan',
-            'data' => [
-                'id_complaint' => $complaint->id_complaint,
-                'complaint' => $complaint->complaint,
-                'complaint_date' => $complaint->complaint_date,
-                'user' => [
-                    'id_users' => $user->id_users,
-                    'username' => $user->username,
-                    'email' => $user->email,
-                ],
-                'location' => [
-                    'id_location' => $location->id_location,
-                    'latitude' => $location->latitude,
-                    'longitude' => $location->longitude,
-                    'complete_address' => $location->complete_address,
-                ],
-                'media' => $complaint->load('media')
-            ]
-        ], 201);
-    }
+    // ... simpan media (punyamu sudah OK)
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Pengaduan Berhasil Disimpan',
+        'data' => [
+            'id_complaint' => $complaint->id_complaint,
+            'complaint' => $complaint->complaint,
+            'complaint_date' => $complaint->complaint_date,
+            'status' => $complaint->status, // <- KIRIM STATUS
+            'user' => [
+                'id_users' => $user->id_users,
+                'username' => $user->username,
+                'email' => $user->email,
+            ],
+            'location' => [
+                'id_location' => $location->id_location,
+                'latitude' => $location->latitude,
+                'longitude' => $location->longitude,
+                'complete_address' => $location->complete_address,
+            ],
+            'media' => $complaint->load('media')
+        ]
+    ], 201);
+}
+
 
     /**
      * Display the specified resource.
