@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('complaint');
             $table->dateTime('complaint_date')->useCurrent();
             $table->foreignId('id_tour')->constrained('tours', 'id_tour')->onDelete('cascade')->onUpdate('cascade');
+            $table->enum('status', ['pending', 'proses', 'selesai'])->default('pending');
+
             // $table->string('Photo_Video')->nullable();
             $table->timestamps();
         });
