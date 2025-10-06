@@ -15,6 +15,8 @@ class complaints extends Model
         'id_users',
         'id_location',
         'id_tour',
+            'status',
+
     ];
 
     public function user()
