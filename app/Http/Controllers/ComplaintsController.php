@@ -210,121 +210,62 @@ class ComplaintsController extends Controller
     /**
      * Update pengaduan (teks, lokasi, media). Status tidak diubah di sini.
      */
-    public function update(Request $request, string $id)
-    {
-        Log::info('Update request received:', [
-            'id'     => $id,
-            'method' => $request->method(),
-            'all'    => $request->all(),
-            'files'  => $request->hasFile('media') ? 'Has files' : 'No files'
-        ]);
+   public function update(Request $request, string $id)
+{
+    $validated = $request->validate([
+        'status' => 'required|in:pending,proses,selesai'
+    ]);
 
-        $validated = $request->validate([
-            'complaint'        => 'required|string',
-            'latitude'         => 'required|numeric',
-            'longitude'        => 'required|numeric',
-            'complete_address' => 'required|string|max:255',
-            'media.*'          => 'nullable|file|mimes:jpg,jpeg,png,mp4'
-        ]);
-
-        DB::beginTransaction();
-        try {
-            $complaint = complaints::where('id_complaint', $id)->first();
-            if (!$complaint) {
-                DB::rollBack();
-                return response()->json(['status' => 'error', 'message' => 'Pengaduan Tidak Ditemukan'], 404);
-            }
-
-            // update field utama
-            $complaint->complaint      = $validated['complaint'];
-            $complaint->complaint_date = now();
-
-            if ($complaint->isDirty()) {
-                if (!$complaint->save()) throw new \Exception('Failed to save complaint');
-            }
-
-            // update lokasi
-            $location = locations::find($complaint->id_location);
-            if (!$location) throw new \Exception('Location not found');
-
-            $location->latitude         = $validated['latitude'];
-            $location->longitude        = $validated['longitude'];
-            $location->complete_address = $validated['complete_address'];
-            if ($location->isDirty() && !$location->save()) {
-                throw new \Exception('Failed to save location');
-            }
-
-            // update media jika ada file baru:
-            if ($request->hasFile('media')) {
-                // hapus media lama
-                $oldMedias = medias::where('id_complaint', $complaint->id_complaint)->get();
-                foreach ($oldMedias as $oldMedia) {
-                    if (Storage::disk('public')->exists($oldMedia->path)) {
-                        Storage::disk('public')->delete($oldMedia->path);
-                    }
-                    $oldMedia->delete();
-                }
-
-                $files = is_array($request->file('media')) ? $request->file('media') : [$request->file('media')];
-                foreach ($files as $file) {
-                    if ($file && $file->isValid()) {
-                        $mime = $file->getMimeType();
-                        $mediaType = str_starts_with($mime, 'video') ? 'video' : 'image';
-                        $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
-                        $pathfile = $file->storeAs('uploads', $filename, 'public');
-
-                        medias::create([
-                            'id_complaint' => $complaint->id_complaint,
-                            'path'         => $pathfile,
-                            'media_type'   => $mediaType,
-                        ]);
-                    }
-                }
-            }
-
-            DB::commit();
-
-            $complaint = $complaint->fresh(['media', 'location', 'user']);
-
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'Pengaduan Berhasil Diupdate',
-                'data'    => [
-                    'id_complaint'   => $complaint->id_complaint,
-                    'complaint'      => $complaint->complaint,
-                    'complaint_date' => $complaint->complaint_date,
-                    'status'         => $complaint->status, // ikutkan status juga di response
-                    'location' => [
-                        'id_location'      => $complaint->location->id_location,
-                        'latitude'         => $complaint->location->latitude,
-                        'longitude'        => $complaint->location->longitude,
-                        'complete_address' => $complaint->location->complete_address,
-                    ],
-                    'media' => $complaint->media->map(function ($media) {
-                        return [
-                            'id_media'   => $media->id_media,
-                            'path'       => Storage::url($media->path),
-                            'media_type' => $media->media_type,
-                        ];
-                    }),
-                    'user' => [
-                        'id_users' => $complaint->user->id_users,
-                        'username' => $complaint->user->username,
-                        'email'    => $complaint->user->email,
-                    ]
-                ]
-            ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error saat update complaint: ' . $e->getMessage());
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Terjadi kesalahan saat mengupdate pengaduan',
-                'error'   => $e->getMessage(),
-            ], 500);
-        }
+    $complaint = complaints::find($id);
+    if (!$complaint) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Pengaduan tidak ditemukan'
+        ], 404);
     }
+
+    // Update hanya status
+    $complaint->status = $validated['status'];
+    $complaint->save();
+
+    // Ambil ulang data lengkap untuk response
+    $complaint->load(['media', 'user', 'location', 'tour']);
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Status pengaduan berhasil diperbarui',
+        'data'    => [
+            'id_complaint'   => $complaint->id_complaint,
+            'complaint'      => $complaint->complaint,
+            'complaint_date' => $complaint->complaint_date,
+            'status'         => $complaint->status,
+            'user' => [
+                'id_users' => $complaint->user->id_users,
+                'username' => $complaint->user->username,
+                'email'    => $complaint->user->email,
+            ],
+            'location' => [
+                'id_location'      => $complaint->location->id_location,
+                'latitude'         => $complaint->location->latitude,
+                'longitude'        => $complaint->location->longitude,
+                'complete_address' => $complaint->location->complete_address,
+            ],
+            'media' => $complaint->media->map(function ($media) {
+                return [
+                    'id_media'   => $media->id_media,
+                    'path'       => Storage::url($media->path),
+                    'media_type' => $media->media_type,
+                ];
+            }),
+            'tour' => [
+                'id_tour'      => $complaint->tour ? $complaint->tour->id_tour : null,
+                'tour_name'    => $complaint->tour ? $complaint->tour->tour_name : null,
+                'address_tour' => $complaint->tour ? $complaint->tour->address_tour : null,
+            ],
+        ]
+    ], 200);
+}
+
 
     /**
      * Hapus pengaduan + media
