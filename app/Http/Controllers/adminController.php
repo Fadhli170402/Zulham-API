@@ -132,6 +132,8 @@ class adminController extends Controller
                 'id_complaint' => $pengaduan->id_complaint,
                 'complaint' => $pengaduan->complaint,
                 'complaint_date' => $pengaduan->complaint_date,
+                                   'status'         => $pengaduan->status, // ← tambahkan status
+
                 'user' => $pengaduan->user->username,
                 'location' => $pengaduan->location->complete_address,
                 'tour' => $pengaduan->tour ? $pengaduan->tour->tour_name : null,
