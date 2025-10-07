@@ -93,10 +93,60 @@ class adminController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
-    {
-        //
+   public function update(Request $request, string $id)
+{
+    // (Opsional) batasi hanya admin
+
+
+    $validated = $request->validate([
+        'status' => 'required|in:pending,proses,selesai'
+    ]);
+
+    $complaint = complaints::find($id);
+    if (!$complaint) {
+        return response()->json(['status' => 'error', 'message' => 'Pengaduan tidak ditemukan'], 404);
     }
+
+    $complaint->status = $validated['status'];
+    $complaint->save();
+
+    $complaint->load(['media', 'user', 'location', 'tour']);
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Status pengaduan berhasil diperbarui',
+        'data'    => [
+            'id_complaint'   => $complaint->id_complaint,
+            'complaint'      => $complaint->complaint,
+            'complaint_date' => $complaint->complaint_date,
+            'status'         => $complaint->status,
+            'user' => [
+                'id_users' => $complaint->user->id_users,
+                'username' => $complaint->user->username,
+                'email'    => $complaint->user->email,
+            ],
+            'location' => [
+                'id_location'      => $complaint->location->id_location,
+                'latitude'         => $complaint->location->latitude,
+                'longitude'        => $complaint->location->longitude,
+                'complete_address' => $complaint->location->complete_address,
+            ],
+            'media' => $complaint->media->map(function ($media) {
+                return [
+                    'id_media'   => $media->id_media,
+                    'path'       => Storage::url($media->path),
+                    'media_type' => $media->media_type,
+                ];
+            }),
+            'tour' => [
+                'id_tour'      => $complaint->tour ? $complaint->tour->id_tour : null,
+                'tour_name'    => $complaint->tour ? $complaint->tour->tour_name : null,
+                'address_tour' => $complaint->tour ? $complaint->tour->address_tour : null,
+            ],
+        ]
+    ], 200);
+}
+
 
     /**
      * Remove the specified resource from storage.
