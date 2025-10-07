@@ -24,6 +24,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::get('/ratingsall', [RatingsController::class, 'indexAll']);
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->middleware('guest')->name('password.email');
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->middleware('guest')->name('password.update');
+Route::put('/admin/complaints/{id}/status', [adminController::class, 'update']);
 
 Route::middleware('auth:sanctum', 'role:admin')->group(function () {
     Route::apiResource('/admin/dasboard', adminController::class);
